@@ -1,0 +1,33 @@
+# Build artifacts
+build/
+*.app
+*.dSYM
+
+# Swift
+*.swiftpm
+*.swiftmodule
+*.swift-build
+
+# Icon generation
+WallpaperApp.iconset/
+*.png
+!*.svg
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Temporary files
+*.tmp
+*.log
+
+# Xcode
+*.xcodeproj
+*.xcworkspace
+xcuserdata/
+DerivedData/
+
+# IDE
+.vscode/
+.idea/
