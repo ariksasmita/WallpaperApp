@@ -96,9 +96,23 @@ open ~/Applications/WallpaperApp.app
 
 Click the **🖼️ icon** in your menu bar to access:
 
+- **Select Wallpaper Image...** (⌘+O) - Open file picker to choose and auto-optimize a new wallpaper
 - **Add to login items** / **✓ Login at startup** - Toggle auto-start on login
 - **Reload Wallpaper** (⌘+R) - Reload the wallpaper without quitting
 - **Quit WallpaperApp** (⌘+Q) - Close the app
+
+### Selecting Wallpaper via Menu
+
+The easiest way to set your wallpaper:
+
+1. Click **🖼️** → **Select Wallpaper Image...**
+2. Choose any image (JPG, PNG, etc.)
+3. The app will:
+   - Detect your screen resolution
+   - Optimize the image to match
+   - Save it to `~/Pictures/wallpaper.png`
+   - Create a backup of your old wallpaper
+   - Automatically reload the wallpaper
 
 ### Quitting
 

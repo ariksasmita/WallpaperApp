@@ -1,4 +1,5 @@
 import Cocoa
+import UniformTypeIdentifiers
 
 class AppDelegate: NSObject, NSApplicationDelegate {
     var windows: [NSWindow] = []
@@ -126,6 +127,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         
         let menu = NSMenu()
         
+        menu.addItem(NSMenuItem(title: "Select Wallpaper Image...", action: #selector(selectWallpaper), keyEquivalent: "o"))
+        menu.addItem(NSMenuItem.separator())
+        
         let loginItemTitle = isLoginItemEnabled() ? "✓ Login at startup" : "Add to login items"
         menu.addItem(NSMenuItem(title: loginItemTitle, action: #selector(toggleLoginItem), keyEquivalent: "l"))
         
@@ -136,6 +140,144 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(NSMenuItem(title: "Quit WallpaperApp", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
         
         statusItem?.menu = menu
+    }
+    
+    @objc func selectWallpaper() {
+        // Activate app to bring file picker to front
+        NSApp.setActivationPolicy(.regular)
+        
+        let panel = NSOpenPanel()
+        panel.title = "Select Wallpaper Image"
+        panel.message = "Choose an image to use as your wallpaper. It will be optimized and saved to ~/Pictures/wallpaper.png"
+        panel.allowedContentTypes = [.image]
+        panel.allowsMultipleSelection = false
+        panel.canChooseDirectories = false
+        
+        panel.begin { response in
+            if response == .OK, let url = panel.url {
+                self.processSelectedImage(url)
+            }
+            
+            // Return to background mode
+            NSApp.setActivationPolicy(.accessory)
+        }
+    }
+    
+    func processSelectedImage(_ url: URL) {
+        print("Processing selected image: \(url.path)")
+        
+        // Get screen resolution
+        let screens = NSScreen.screens
+        guard let mainScreen = screens.first else { return }
+        
+        let screenScale = mainScreen.backingScaleFactor
+        let screenWidth = Int(mainScreen.frame.width * screenScale)
+        let screenHeight = Int(mainScreen.frame.height * screenScale)
+        
+        print("Screen resolution: \(screenWidth)x\(screenHeight)")
+        
+        // Load the selected image
+        guard let imageSource = CGImageSourceCreateWithURL(url as CFURL, nil),
+              let originalImage = CGImageSourceCreateImageAtIndex(imageSource, 0, nil) else {
+            print("Failed to load image")
+            showAlert(title: "Error", message: "Failed to load the selected image.")
+            return
+        }
+        
+        let originalWidth = originalImage.width
+        let originalHeight = originalImage.height
+        
+        print("Original image: \(originalWidth)x\(originalHeight)")
+        
+        // Calculate target dimensions
+        let aspectRatio = CGFloat(originalWidth) / CGFloat(originalHeight)
+        let screenAspectRatio = mainScreen.frame.width / mainScreen.frame.height
+        
+        var targetWidth = screenWidth
+        var targetHeight = screenHeight
+        
+        if aspectRatio > screenAspectRatio {
+            targetHeight = screenHeight
+            targetWidth = Int(CGFloat(screenHeight) * aspectRatio)
+        } else {
+            targetWidth = screenWidth
+            targetHeight = Int(CGFloat(screenWidth) / aspectRatio)
+        }
+        
+        print("Target size: \(targetWidth)x\(targetHeight)")
+        
+        // Create optimized image
+        guard let resizedImage = resizeImage(originalImage, to: CGSize(width: targetWidth, height: targetHeight)) else {
+            print("Failed to resize image")
+            showAlert(title: "Error", message: "Failed to resize the image.")
+            return
+        }
+        
+        // Save to ~/Pictures/wallpaper.png
+        let picturesPath = "\(NSHomeDirectory())/Pictures"
+        let outputPath = "\(picturesPath)/wallpaper.png"
+        
+        // Create Pictures directory if it doesn't exist
+        try? FileManager.default.createDirectory(atPath: picturesPath, withIntermediateDirectories: true)
+        
+        // Backup existing wallpaper if it exists
+        if FileManager.default.fileExists(atPath: outputPath) {
+            let backupPath = "\(picturesPath)/wallpaper_backup.png"
+            try? FileManager.default.removeItem(atPath: backupPath)
+            try? FileManager.default.copyItem(atPath: outputPath, toPath: backupPath)
+            print("Backup saved to: \(backupPath)")
+        }
+        
+        // Save the optimized image
+        guard let destination = CGImageDestinationCreateWithURL(URL(fileURLWithPath: outputPath) as CFURL, UTType.png.identifier as CFString, 1, nil) else {
+            print("Failed to create image destination")
+            showAlert(title: "Error", message: "Failed to save the image.")
+            return
+        }
+        
+        CGImageDestinationAddImage(destination, resizedImage, nil)
+        
+        if CGImageDestinationFinalize(destination) {
+            print("✅ Wallpaper saved to: \(outputPath)")
+            showAlert(title: "Success!", message: "Wallpaper has been optimized and saved to ~/Pictures/wallpaper.png\n\nClick OK to reload.")
+            
+            // Reload wallpaper
+            reloadWallpaper()
+        } else {
+            print("Failed to finalize image")
+            showAlert(title: "Error", message: "Failed to save the wallpaper.")
+        }
+    }
+    
+    func resizeImage(_ image: CGImage, to size: CGSize) -> CGImage? {
+        let width = Int(size.width)
+        let height = Int(size.height)
+        
+        guard let context = CGContext(
+            data: nil,
+            width: width,
+            height: height,
+            bitsPerComponent: 8,
+            bytesPerRow: width * 4,
+            space: CGColorSpaceCreateDeviceRGB(),
+            bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+        ) else {
+            return nil
+        }
+        
+        context.interpolationQuality = .high
+        context.draw(image, in: CGRect(x: 0, y: 0, width: size.width, height: size.height))
+        
+        return context.makeImage()
+    }
+    
+    func showAlert(title: String, message: String) {
+        let alert = NSAlert()
+        alert.messageText = title
+        alert.informativeText = message
+        alert.alertStyle = .informational
+        alert.addButton(withTitle: "OK")
+        alert.runModal()
     }
     
     func isLoginItemEnabled() -> Bool {
@@ -223,6 +365,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     func updateMenu() {
         if let menu = statusItem?.menu {
             menu.removeAllItems()
+            
+            menu.addItem(NSMenuItem(title: "Select Wallpaper Image...", action: #selector(selectWallpaper), keyEquivalent: "o"))
+            menu.addItem(NSMenuItem.separator())
             
             let loginItemTitle = isLoginItemEnabled() ? "✓ Login at startup" : "Add to login items"
             menu.addItem(NSMenuItem(title: loginItemTitle, action: #selector(toggleLoginItem), keyEquivalent: "l"))
