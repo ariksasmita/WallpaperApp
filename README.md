@@ -2,7 +2,37 @@
 
 <img src="image-frame.svg" width="100" height="100" alt="WallpaperApp Icon">
 
-A simple macOS app that displays a full-screen image behind all other windows. Perfect for managed Macs where you can't change the desktop wallpaper.
+> **A simple macOS app that displays a full-screen image behind all other windows.**
+>
+> Perfect for managed Macs where you can't change the desktop wallpaper.
+
+## 📖 About
+
+**WallpaperApp** was born out of frustration with managed MacBooks that lock down the desktop wallpaper setting. This lightweight background app creates a full-screen window that sits behind all other applications, effectively "faking" a custom wallpaper.
+
+### Why WallpaperApp?
+
+- 🏢 **Corporate Macs** often restrict wallpaper changes via MDM
+- 🎨 **Personalization** shouldn't be limited by IT policy
+- 🔒 **Privacy** - runs locally, no cloud, no tracking
+- 💡 **Simple** - just build, add your image, and run
+
+### How It Works
+
+Instead of changing the actual desktop wallpaper (which is often locked), WallpaperApp:
+
+1. Creates a borderless full-screen window on **each connected monitor**
+2. Sets the window level **below all other apps** but **above the desktop**
+3. Displays your chosen image with **fill scaling** (covers entire screen)
+4. Stays out of your way - **clicks pass through** to other apps
+5. Lives in the **menu bar** (🖼️) for easy quitting
+
+### Tech Stack
+
+- **Language:** Swift
+- **Framework:** Cocoa (AppKit)
+- **Build:** Native Swift compiler
+- **Icon:** Custom SVG → .icns conversion
 
 ## 🎯 Features
 
