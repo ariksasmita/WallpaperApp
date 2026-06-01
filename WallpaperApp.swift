@@ -121,7 +121,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     func setupMenuBar() {
-        statusItem = NSStatusBar.system.statusItem(withLength: 28)
+        statusItem = NSStatusBar.system.statusItem(withLength: 22)
         if let button = statusItem?.button {
             // Load icon from app bundle
             if let iconPath = Bundle.main.path(forResource: "menubar-icon", ofType: "png"),
