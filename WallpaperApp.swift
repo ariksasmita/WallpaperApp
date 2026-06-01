@@ -28,8 +28,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             defer: false
         )
         
-        // Set window level to be behind everything
-        window.level = NSWindow.Level(rawValue: -20)
+        // Set window level to be BELOW widgets and desktop icons
+        // Use kCGDesktopWindowLevel to sit behind desktop icons/widgets
+        window.level = NSWindow.Level(rawValue: Int(CGWindowLevelForKey(.desktopWindow)))
         window.isOpaque = true
         window.backgroundColor = NSColor.black
         window.ignoresMouseEvents = true
