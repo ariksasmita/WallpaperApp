@@ -17,6 +17,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     func createWindow(for screen: NSScreen) {
         let screenFrame = screen.frame
+        let screenSize = screenFrame.size
         
         // Create fullscreen window for this screen
         let window = NSWindow(
@@ -35,24 +36,73 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         
         // Load and display wallpaper
         if let imagePath = findWallpaperPath() {
-            if let image = NSImage(contentsOfFile: imagePath) {
-                // Create image view with proper layer backing for efficiency
-                let imageView = NSImageView(frame: NSRect(origin: .zero, size: screenFrame.size))
-                imageView.imageScaling = .scaleAxesIndependently
-                imageView.image = image
-                imageView.wantsLayer = true
-                imageView.layer?.contentsGravity = .resizeAspectFill
+            if let image = loadOptimizedImage(for: imagePath, screenSize: screenSize, scale: screen.backingScaleFactor) {
+                let contentView = NSView(frame: NSRect(origin: .zero, size: screenSize))
+                contentView.wantsLayer = true
                 
-                window.contentView = imageView
+                let imageLayer = CALayer()
+                imageLayer.frame = contentView.bounds
+                imageLayer.contents = image
+                imageLayer.contentsGravity = .resizeAspectFill
                 
-                // Enable layer backing for the window (more efficient)
-                window.contentView?.wantsLayer = true
-                window.contentView?.layer?.contentsGravity = .resizeAspectFill
+                contentView.layer = imageLayer
+                window.contentView = contentView
             }
         }
         
         window.makeKeyAndOrderFront(nil)
         windows.append(window)
+    }
+    
+    func loadOptimizedImage(for path: String, screenSize: CGSize, scale: CGFloat) -> CGImage? {
+        let url = URL(fileURLWithPath: path)
+        
+        // Calculate max dimensions (with 2x buffer for retina)
+        let maxWidth = Int(screenSize.width * scale * 1.5)
+        let maxHeight = Int(screenSize.height * scale * 1.5)
+        
+        guard let imageSource = CGImageSourceCreateWithURL(url as CFURL, nil) else {
+            return nil
+        }
+        
+        // Get original image dimensions
+        guard let properties = CGImageSourceCopyPropertiesAtIndex(imageSource, 0, nil) as? [CFString: Any] else {
+            return nil
+        }
+        
+        let originalWidth = properties[kCGImagePropertyPixelWidth] as? Int ?? 0
+        let originalHeight = properties[kCGImagePropertyPixelHeight] as? Int ?? 0
+        
+        // Calculate target dimensions maintaining aspect ratio
+        let aspectRatio = CGFloat(originalWidth) / CGFloat(originalHeight)
+        let screenAspectRatio = screenSize.width / screenSize.height
+        
+        var targetWidth = maxWidth
+        var targetHeight = maxHeight
+        
+        if aspectRatio > screenAspectRatio {
+            // Image is wider - fit to height
+            targetHeight = maxHeight
+            targetWidth = Int(CGFloat(maxHeight) * aspectRatio)
+        } else {
+            // Image is taller - fit to width
+            targetWidth = maxWidth
+            targetHeight = Int(CGFloat(maxWidth) / aspectRatio)
+        }
+        
+        // Only downsample, never upsample
+        targetWidth = min(targetWidth, originalWidth)
+        targetHeight = min(targetHeight, originalHeight)
+        
+        // Decode with target size using ImageIO for efficient loading
+        let options: [CFString: Any] = [
+            kCGImageSourceCreateThumbnailFromImageIfAbsent: true,
+            kCGImageSourceCreateThumbnailWithTransform: true,
+            kCGImageSourceShouldCacheImmediately: true,
+            kCGImageSourceThumbnailMaxPixelSize: max(targetWidth, targetHeight)
+        ]
+        
+        return CGImageSourceCreateThumbnailAtIndex(imageSource, 0, options as CFDictionary)
     }
     
     func findWallpaperPath() -> String? {
@@ -76,7 +126,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         
         let menu = NSMenu()
         
-        // Add login item status and toggle
         let loginItemTitle = isLoginItemEnabled() ? "✓ Login at startup" : "Add to login items"
         menu.addItem(NSMenuItem(title: loginItemTitle, action: #selector(toggleLoginItem), keyEquivalent: "l"))
         
@@ -160,7 +209,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     @objc func reloadWallpaper() {
-        // Close all windows and recreate them
         for window in windows {
             window.close()
         }

@@ -118,11 +118,35 @@ Either:
 - Each monitor gets its own window with the same wallpaper
 - If no image is found, shows a black screen
 
+### Image Optimization for Lower Memory Usage
+
+**Memory usage depends on your image resolution!**
+
+- **Optimized image** (matches screen): ~110-180 MB
+- **Large image** (2x screen): ~340 MB
+- **Very large image** (4K+): 500+ MB
+
+To optimize your wallpaper:
+
+```bash
+# Automatic optimization (included in repo)
+./optimize-wallpaper.sh ~/Pictures/wallpaper.jpg
+
+# Or manually with sips (built-in macOS tool)
+sips -z 1920 1080 ~/Pictures/wallpaper.jpg --out ~/Pictures/wallpaper_optimized.jpg
+```
+
 ## 💻 Resource Usage
 
-- **Memory:** ~260-280 MB (~1.1% of 24GB RAM)
+**With optimized image (recommended):**
+- **Memory:** ~110-180 MB (~0.5% of 24GB RAM)
 - **CPU:** 0.0% when idle
-- Lightweight background app with minimal impact
+
+**With large image:**
+- **Memory:** ~340 MB (~1.4% of 24GB RAM)
+- **CPU:** 0.0% when idle
+
+The app uses direct CALayer rendering and ImageIO for efficient image loading with on-the-fly downsampling.
 
 ## 🔄 Auto-Start on Login
 
