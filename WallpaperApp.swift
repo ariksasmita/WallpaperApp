@@ -82,9 +82,125 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         if let button = statusItem?.button {
             button.title = "🖼️"
         }
+        
         let menu = NSMenu()
+        
+        // Add login item status and toggle
+        let loginItemTitle = isLoginItemEnabled() ? "✓ Login at startup" : "Add to login items"
+        menu.addItem(NSMenuItem(title: loginItemTitle, action: #selector(toggleLoginItem), keyEquivalent: "l"))
+        
+        menu.addItem(NSMenuItem.separator())
+        
+        // Add "Reload Wallpaper" option
+        menu.addItem(NSMenuItem(title: "Reload Wallpaper", action: #selector(reloadWallpaper), keyEquivalent: "r"))
+        
+        menu.addItem(NSMenuItem.separator())
         menu.addItem(NSMenuItem(title: "Quit WallpaperApp", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
+        
         statusItem?.menu = menu
+    }
+    
+    func isLoginItemEnabled() -> Bool {
+        // Check if we're in login items by searching for our app path
+        let appPath = Bundle.main.bundleURL.path
+        
+        let script = """
+        tell application "System Events"
+            set loginItems to every login item
+            repeat with item in loginItems
+                if path of item is "\(appPath)" then
+                    return "true"
+                end if
+            end repeat
+            return "false"
+        end tell
+        """
+        
+        if let scriptObject = NSAppleScript(source: script) {
+            var errorInfo: NSDictionary?
+            let result = scriptObject.executeAndReturnError(&errorInfo)
+            
+            if let resultString = result.stringValue {
+                return resultString == "true"
+            }
+        }
+        
+        return false
+    }
+    
+    @objc func toggleLoginItem() {
+        let appPath = Bundle.main.bundleURL.path
+        
+        if isLoginItemEnabled() {
+            // Remove from login items
+            let script = """
+            tell application "System Events"
+                set loginItems to every login item
+                repeat with item in loginItems
+                    if path of item is "\(appPath)" then
+                        delete item
+                        return "removed"
+                    end if
+                end repeat
+            end tell
+            """
+            
+            if let scriptObject = NSAppleScript(source: script) {
+                var errorInfo: NSDictionary?
+                scriptObject.executeAndReturnError(&errorInfo)
+            }
+            
+            print("Removed from login items")
+        } else {
+            // Add to login items
+            let script = """
+            tell application "System Events"
+                make login item at end with properties {path:"\(appPath)", hidden:false}
+            end tell
+            """
+            
+            if let scriptObject = NSAppleScript(source: script) {
+                var errorInfo: NSDictionary?
+                scriptObject.executeAndReturnError(&errorInfo)
+                
+                if let error = errorInfo {
+                    print("Error adding to login items: \(error)")
+                } else {
+                    print("Added to login items")
+                }
+            }
+        }
+        
+        updateMenu()
+    }
+    
+    @objc func reloadWallpaper() {
+        // Close all windows and recreate them
+        for window in windows {
+            window.close()
+        }
+        windows.removeAll()
+        
+        let screens = NSScreen.screens
+        for screen in screens {
+            createWindow(for: screen)
+        }
+    }
+    
+    func updateMenu() {
+        // Refresh the menu to show updated login item status
+        if let menu = statusItem?.menu {
+            menu.removeAllItems()
+            
+            let loginItemTitle = isLoginItemEnabled() ? "✓ Login at startup" : "Add to login items"
+            menu.addItem(NSMenuItem(title: loginItemTitle, action: #selector(toggleLoginItem), keyEquivalent: "l"))
+            
+            menu.addItem(NSMenuItem.separator())
+            menu.addItem(NSMenuItem(title: "Reload Wallpaper", action: #selector(reloadWallpaper), keyEquivalent: "r"))
+            
+            menu.addItem(NSMenuItem.separator())
+            menu.addItem(NSMenuItem(title: "Quit WallpaperApp", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
+        }
     }
     
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {

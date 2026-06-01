@@ -92,16 +92,24 @@ The app searches in order and uses the first one found.
 open ~/Applications/WallpaperApp.app
 ```
 
+### Menu Bar Options
+
+Click the **🖼️ icon** in your menu bar to access:
+
+- **Add to login items** / **✓ Login at startup** - Toggle auto-start on login
+- **Reload Wallpaper** (⌘+R) - Reload the wallpaper without quitting
+- **Quit WallpaperApp** (⌘+Q) - Close the app
+
 ### Quitting
 
-- Click the **🖼️ icon** in your menu bar → "Quit WallpaperApp"
+- Click the **🖼️ icon** → "Quit WallpaperApp"
 - Or via Terminal: `pkill WallpaperApp`
 
 ### Restarting with new wallpaper
 
-```bash
-pkill WallpaperApp && open ~/Applications/WallpaperApp.app
-```
+Either:
+- Use **⌘+R** (or menu → Reload Wallpaper)
+- Or quit and restart: `pkill WallpaperApp && open ~/Applications/WallpaperApp.app`
 
 ## 🎨 Tips
 
