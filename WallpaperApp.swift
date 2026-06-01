@@ -121,9 +121,17 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     func setupMenuBar() {
-        statusItem = NSStatusBar.system.statusItem(withLength: 40)
+        statusItem = NSStatusBar.system.statusItem(withLength: 28)
         if let button = statusItem?.button {
-            button.title = "🖼️"
+            // Load icon from app bundle
+            if let iconPath = Bundle.main.path(forResource: "menubar-icon", ofType: "png"),
+               let icon = NSImage(contentsOfFile: iconPath) {
+                icon.size = NSSize(width: 18, height: 18)
+                button.image = icon
+            } else {
+                // Fallback to emoji if icon not found
+                button.title = "🖼️"
+            }
         }
         
         let menu = NSMenu()

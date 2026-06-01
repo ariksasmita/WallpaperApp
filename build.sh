@@ -26,6 +26,7 @@ cp Info.plist build/WallpaperApp.app/Contents/
 # Copy icon
 echo "🎨 Copying app icon..."
 cp WallpaperApp.icns build/WallpaperApp.app/Contents/Resources/AppIcon.icns
+cp menubar-icon.png build/WallpaperApp.app/Contents/Resources/
 
 # Update Info.plist with icon reference
 /usr/libexec/PlistBuddy -c "Add :CFBundleIconKey string AppIcon" build/WallpaperApp.app/Contents/Info.plist 2>/dev/null || true
