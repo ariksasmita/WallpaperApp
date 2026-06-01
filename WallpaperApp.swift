@@ -33,31 +33,22 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         window.ignoresMouseEvents = true
         window.collectionBehavior = [.canJoinAllSpaces]
         
-        // Load and scale wallpaper to FILL the screen (may crop)
-        if let imagePath = findWallpaperPath(), let image = NSImage(contentsOfFile: imagePath) {
-            let imageView = NSImageView(frame: window.contentView!.bounds)
-            
-            // Scale to fill - will crop if aspect ratios don't match
-            imageView.imageScaling = .scaleAxesIndependently
-            imageView.image = image
-            imageView.autoresizingMask = [.width, .height]
-            
-            // Center the image
-            if let view = window.contentView {
-                imageView.translatesAutoresizingMaskIntoConstraints = false
-                view.addSubview(imageView)
+        // Load and display wallpaper
+        if let imagePath = findWallpaperPath() {
+            if let image = NSImage(contentsOfFile: imagePath) {
+                // Create image view with proper layer backing for efficiency
+                let imageView = NSImageView(frame: NSRect(origin: .zero, size: screenFrame.size))
+                imageView.imageScaling = .scaleAxesIndependently
+                imageView.image = image
+                imageView.wantsLayer = true
+                imageView.layer?.contentsGravity = .resizeAspectFill
                 
-                // Constrain to fill completely
-                NSLayoutConstraint.activate([
-                    imageView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-                    imageView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-                    imageView.topAnchor.constraint(equalTo: view.topAnchor),
-                    imageView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
-                ])
+                window.contentView = imageView
+                
+                // Enable layer backing for the window (more efficient)
+                window.contentView?.wantsLayer = true
+                window.contentView?.layer?.contentsGravity = .resizeAspectFill
             }
-            
-            window.contentView = imageView
-            window.backgroundColor = NSColor.black
         }
         
         window.makeKeyAndOrderFront(nil)
@@ -90,8 +81,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(NSMenuItem(title: loginItemTitle, action: #selector(toggleLoginItem), keyEquivalent: "l"))
         
         menu.addItem(NSMenuItem.separator())
-        
-        // Add "Reload Wallpaper" option
         menu.addItem(NSMenuItem(title: "Reload Wallpaper", action: #selector(reloadWallpaper), keyEquivalent: "r"))
         
         menu.addItem(NSMenuItem.separator())
@@ -101,9 +90,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     func isLoginItemEnabled() -> Bool {
-        // Check if we're in login items by searching for our app path
         let appPath = Bundle.main.bundleURL.path
-        
         let script = """
         tell application "System Events"
             set loginItems to every login item
@@ -132,7 +119,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let appPath = Bundle.main.bundleURL.path
         
         if isLoginItemEnabled() {
-            // Remove from login items
             let script = """
             tell application "System Events"
                 set loginItems to every login item
@@ -152,7 +138,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             
             print("Removed from login items")
         } else {
-            // Add to login items
             let script = """
             tell application "System Events"
                 make login item at end with properties {path:"\(appPath)", hidden:false}
@@ -188,7 +173,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     func updateMenu() {
-        // Refresh the menu to show updated login item status
         if let menu = statusItem?.menu {
             menu.removeAllItems()
             
@@ -208,7 +192,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     func applicationWillTerminate(_ notification: Notification) {
-        // Clean up status bar
         if let statusItem = statusItem {
             NSStatusBar.system.removeStatusItem(statusItem)
         }

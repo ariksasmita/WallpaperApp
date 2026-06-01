@@ -118,6 +118,12 @@ Either:
 - Each monitor gets its own window with the same wallpaper
 - If no image is found, shows a black screen
 
+## 💻 Resource Usage
+
+- **Memory:** ~260-280 MB (~1.1% of 24GB RAM)
+- **CPU:** 0.0% when idle
+- Lightweight background app with minimal impact
+
 ## 🔄 Auto-Start on Login
 
 To automatically start on login:
