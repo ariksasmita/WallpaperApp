@@ -134,9 +134,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(NSMenuItem(title: loginItemTitle, action: #selector(toggleLoginItem), keyEquivalent: "l"))
         
         menu.addItem(NSMenuItem.separator())
-        menu.addItem(NSMenuItem(title: "Reload Wallpaper", action: #selector(reloadWallpaper), keyEquivalent: "r"))
-        
-        menu.addItem(NSMenuItem.separator())
         menu.addItem(NSMenuItem(title: "Quit WallpaperApp", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
         
         statusItem?.menu = menu
@@ -239,10 +236,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         
         if CGImageDestinationFinalize(destination) {
             print("✅ Wallpaper saved to: \(outputPath)")
-            showAlert(title: "Success!", message: "Wallpaper has been optimized and saved to ~/Pictures/wallpaper.png\n\nClick OK to reload.")
-            
-            // Reload wallpaper
-            reloadWallpaper()
+            showAlert(title: "Success!", message: "Wallpaper has been optimized and saved to ~/Pictures/wallpaper.png\n\nPlease quit and restart WallpaperApp to see changes.")
         } else {
             print("Failed to finalize image")
             showAlert(title: "Error", message: "Failed to save the wallpaper.")
@@ -350,18 +344,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         updateMenu()
     }
     
-    @objc func reloadWallpaper() {
-        for window in windows {
-            window.close()
-        }
-        windows.removeAll()
-        
-        let screens = NSScreen.screens
-        for screen in screens {
-            createWindow(for: screen)
-        }
-    }
-    
     func updateMenu() {
         if let menu = statusItem?.menu {
             menu.removeAllItems()
@@ -371,9 +353,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             
             let loginItemTitle = isLoginItemEnabled() ? "✓ Login at startup" : "Add to login items"
             menu.addItem(NSMenuItem(title: loginItemTitle, action: #selector(toggleLoginItem), keyEquivalent: "l"))
-            
-            menu.addItem(NSMenuItem.separator())
-            menu.addItem(NSMenuItem(title: "Reload Wallpaper", action: #selector(reloadWallpaper), keyEquivalent: "r"))
             
             menu.addItem(NSMenuItem.separator())
             menu.addItem(NSMenuItem(title: "Quit WallpaperApp", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
